@@ -5,7 +5,7 @@ import path from "node:path";
 dotenv.config({ path: path.resolve(import.meta.dirname, "../../.env") });
 
 export const config = {
-  port: Number(process.env.PORT ?? 4000),
+  port: Number(process.env.API_PORT ?? 4000),
   nessieKey: process.env.NESSIE_API_KEY ?? "",
   serpApiKey: process.env.SERPAPI_KEY ?? "",
   geminiKey: process.env.GEMINI_API_KEY ?? "",

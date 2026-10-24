@@ -1,28 +1,31 @@
 import { useEffect, useState } from "react";
-
-type Health = { status: string; services: Record<string, boolean> };
+import { api, type Health } from "./api";
+import CashFlowPanel from "./components/CashFlowPanel";
+import PricesPanel from "./components/PricesPanel";
+import "./styles.css";
 
 export default function App() {
   const [health, setHealth] = useState<Health | null>(null);
 
   useEffect(() => {
-    fetch("/api/health").then((r) => r.json()).then(setHealth).catch(() => setHealth(null));
+    api.health().then(setHealth).catch(() => setHealth(null));
   }, []);
 
   return (
-    <main style={{ fontFamily: "system-ui", maxWidth: 640, margin: "48px auto", padding: "0 16px" }}>
-      <h1>Smart Next Move</h1>
-      <p>Your lease is ending. Find the smartest next move for your Toyota.</p>
-      <h2>Service status</h2>
-      {health ? (
-        <ul>
-          {Object.entries(health.services).map(([name, ok]) => (
-            <li key={name}>{ok ? "✅" : "❌"} {name}</li>
-          ))}
-        </ul>
-      ) : (
-        <p>API not reachable.</p>
-      )}
+    <main>
+      <header>
+        <h1>Smart Next Move</h1>
+        <p className="muted">Your Toyota lease is ending. Find the smartest next move.</p>
+        <div className="status">
+          {health
+            ? Object.entries(health.services).map(([name, ok]) => (
+                <span key={name} className={`pill ${ok ? "ok" : "bad"}`}>{name}</span>
+              ))
+            : <span className="pill bad">API offline</span>}
+        </div>
+      </header>
+      <CashFlowPanel />
+      <PricesPanel />
     </main>
   );
 }
