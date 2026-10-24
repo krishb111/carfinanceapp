@@ -9,6 +9,6 @@ export const config = {
   nessieKey: process.env.NESSIE_API_KEY ?? "",
   serpApiKey: process.env.SERPAPI_KEY ?? "",
   geminiKey: process.env.GEMINI_API_KEY ?? "",
-  geminiModel: process.env.GEMINI_MODEL ?? "gemini-flash-latest",
+  geminiModel: process.env.GEMINI_MODEL ?? "gemini-flash-lite-latest",
   databaseUrl: process.env.DATABASE_URL ?? "",
 };
