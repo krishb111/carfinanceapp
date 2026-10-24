@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { config } from "./config.js";
+import { nessieRouter } from "./routes/nessie.js";
 
 const app = express();
 app.use(cors());
@@ -16,6 +17,13 @@ app.get("/api/health", (_req, res) => {
       database: Boolean(config.databaseUrl),
     },
   });
+});
+
+app.use("/api/nessie", nessieRouter);
+
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error(err);
+  res.status(500).json({ error: err.message });
 });
 
 app.listen(config.port, () => {
