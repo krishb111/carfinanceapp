@@ -41,6 +41,7 @@ export type LeaseInput = {
   mileageAllowance: number;
   annualMiles: number;
   lifeEvent: LifeEvent;
+  downPayment?: number;
 };
 export type Option = {
   id: string;
@@ -57,6 +58,8 @@ export type Recommendation = {
   equity: number;
   freeCashFlow: number;
   market: { used: number; tradeIn: number; newPrice: number };
+  lease: LeaseInput;
+  cashFlow: CashFlow;
   options: Option[];
   assumptions: Record<string, string | number>;
 };
@@ -74,5 +77,10 @@ const post = <T>(path: string, body: unknown) =>
   request<T>(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 export const explain = (analysis: Recommendation) => post<{ text: string }>("/explain", { analysis });
+export type Scenario = { changes: Record<string, unknown>; result: Pick<Recommendation, "equity" | "freeCashFlow" | "options"> };
+
 export const chat = (analysis: Recommendation, messages: ChatMessage[]) =>
-  post<{ text: string }>("/explain/chat", { analysis, messages });
+  post<{ text: string; scenario?: Scenario }>("/explain/chat", {
+    analysis,
+    messages: messages.map(({ role, text }) => ({ role, text })),
+  });

@@ -11,6 +11,8 @@ export type LeaseInput = {
   mileageAllowance: number;
   annualMiles: number;
   lifeEvent: LifeEvent;
+  /** Cash put down on a purchase or new lease (optional) */
+  downPayment?: number;
 };
 
 export type MarketPrices = { used: number; tradeIn: number; newPrice: number };
@@ -101,14 +103,17 @@ export function recommend(lease: LeaseInput, market: MarketPrices, cashFlow: Cas
   // Free cash flow already has the current lease payment taken out, so add it back
   const budget = fcf + lease.monthlyPayment;
 
+  const down = Math.max(0, lease.downPayment ?? 0);
+
   const options: Omit<Option, "score" | "affordability">[] = [];
 
   // 1. Buy out the lease (financed)
   {
-    const pmt = loanPayment(lease.buyoutPrice);
-    const balance = loanBalance(lease.buyoutPrice, HORIZON);
+    const financed = Math.max(0, lease.buyoutPrice - down);
+    const pmt = loanPayment(financed);
+    const balance = loanBalance(financed, HORIZON);
     const valueLater = market.used * DEPRECIATION_3YR;
-    const outOfPocket = pmt * HORIZON + MAINT_OWNED_OLDER * HORIZON;
+    const outOfPocket = down + pmt * HORIZON + MAINT_OWNED_OLDER * HORIZON;
     const reasons = [
       equity > 0
         ? `Your buyout is ${usd(lease.buyoutPrice)}, but dealers would pay ${usd(market.tradeIn)} for it (${usd(market.used)} retail), so you keep ${usd(equity)} of equity.`
@@ -116,18 +121,18 @@ export function recommend(lease: LeaseInput, market: MarketPrices, cashFlow: Cas
     ];
     if (overMiles > 0) reasons.push(`Avoids ${usd(turnInFee)} in over-mileage fees.`);
     options.push({
-      id: "buy_out", title: "Buy out your lease", monthlyPayment: round(pmt), upfront: 0,
+      id: "buy_out", title: "Buy out your lease", monthlyPayment: round(pmt), upfront: down,
       netCost: round(outOfPocket - (valueLater - balance) - (overMiles > 0 ? turnInFee : 0)), reasons,
     });
   }
 
   // 2. Trade in equity toward a new purchase
   {
-    const principal = market.newPrice - Math.max(equity, 0) + Math.max(-equity, 0);
+    const principal = Math.max(0, market.newPrice - equity - down);
     const pmt = loanPayment(principal);
     const balance = loanBalance(principal, HORIZON);
     const valueLater = market.newPrice * DEPRECIATION_3YR;
-    const outOfPocket = pmt * HORIZON + MAINT_NEW * HORIZON;
+    const outOfPocket = down + pmt * HORIZON + MAINT_NEW * HORIZON;
     const reasons = [
       equity > 0
         ? `Your ${usd(equity)} of lease equity goes toward a new ${lease.model} at ${usd(market.newPrice)}.`
@@ -135,21 +140,22 @@ export function recommend(lease: LeaseInput, market: MarketPrices, cashFlow: Cas
       `You'd own a car worth about ${usd(valueLater)} in 3 years.`,
     ];
     options.push({
-      id: "trade_in", title: `Trade in for a new ${lease.model}`, monthlyPayment: round(pmt), upfront: 0,
+      id: "trade_in", title: `Trade in for a new ${lease.model}`, monthlyPayment: round(pmt), upfront: down,
       netCost: round(outOfPocket - (valueLater - balance)), reasons,
     });
   }
 
   // 3. Re-lease a new model
   {
-    const pmt = market.newPrice * LEASE_FACTOR;
+    // Cash down on a lease lowers the payment roughly evenly across the term
+    const pmt = market.newPrice * LEASE_FACTOR - down / HORIZON;
     const reasons = [`Lowest commitment for a new car: about ${usd(pmt)}/mo plus ${usd(LEASE_DUE_AT_SIGNING)} at signing.`];
     if (equity > 0) reasons.push(`You'd walk away from ${usd(equity)} of equity unless you sell the car first.`);
     if (turnInFee > 0) reasons.push(`You'd pay ${usd(turnInFee)} in over-mileage fees at turn-in.`);
     if (futureOverMileFee > 0) reasons.push(`At ${lease.annualMiles.toLocaleString()} mi/yr you'd owe about ${usd(futureOverMileFee)} in mileage fees on the next lease.`);
     options.push({
-      id: "re_lease", title: `Lease a new ${lease.model}`, monthlyPayment: round(pmt), upfront: LEASE_DUE_AT_SIGNING,
-      netCost: round(pmt * HORIZON + LEASE_DUE_AT_SIGNING + turnInFee + futureOverMileFee + Math.max(equity, 0) + MAINT_NEW * HORIZON),
+      id: "re_lease", title: `Lease a new ${lease.model}`, monthlyPayment: round(pmt), upfront: LEASE_DUE_AT_SIGNING + down,
+      netCost: round(pmt * HORIZON + LEASE_DUE_AT_SIGNING + down + turnInFee + futureOverMileFee + Math.max(equity, 0) + MAINT_NEW * HORIZON),
       reasons,
     });
   }
@@ -217,6 +223,7 @@ export function recommend(lease: LeaseInput, market: MarketPrices, cashFlow: Cas
       leaseFactor: `${(LEASE_FACTOR * 100).toFixed(2)}% of MSRP per month`,
       valueRetainedAfter3Years: `${DEPRECIATION_3YR * 100}%`,
       overMileFee: `$${OVER_MILE_FEE}/mile`,
+      downPayment: down,
     },
   };
 }

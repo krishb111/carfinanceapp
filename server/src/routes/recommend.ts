@@ -23,6 +23,7 @@ recommendRouter.post("/", async (req, res, next) => {
 
     res.json({
       market: { used, tradeIn: price("trade_in") ?? Math.round(used * 0.88), newPrice },
+      lease,
       cashFlow,
       ...recommend(lease, { used, tradeIn: price("trade_in") ?? Math.round(used * 0.88), newPrice }, cashFlow),
     });

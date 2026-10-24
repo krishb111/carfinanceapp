@@ -65,3 +65,9 @@ button:disabled { opacity: 0.5; cursor: default; }
 .bubble.model { align-self: flex-start; background: var(--card); border: 1px solid var(--border); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .chip { font-weight: 500; font-size: 0.8rem; padding: 6px 10px; }
+.scenario { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 6px; }
+.scenario table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 4px; }
+.scenario td { padding: 3px 4px; }
+.scenario .num { text-align: right; white-space: nowrap; }
+.scenario .up { color: var(--ok); font-size: 0.75rem; margin-left: 4px; }
+.scenario .down { color: var(--accent); font-size: 0.75rem; margin-left: 4px; }
