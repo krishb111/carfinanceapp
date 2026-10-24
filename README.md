@@ -10,7 +10,7 @@ A lease-end and life-event advisor for Toyota drivers. It compares buying out, r
 | Payment & price history | Tiger Data (TimescaleDB) |
 | Plain-language explanations | Gemini |
 | Hosting | Vultr |
-| Domain | smartnextmove.tech |
+| Domain | smartnextmovenow.tech |
 
 ## Run locally
 
@@ -28,7 +28,7 @@ On a fresh Ubuntu VM, as root:
 git clone https://github.com/krishb111/carfinanceapp.git && cd carfinanceapp
 bash deploy/setup.sh          # installs Docker, opens ports 80/443
 nano .env                     # paste the same keys as local .env
-echo "DOMAIN=smartnextmove.tech" >> .env   # once DNS points at the VM
+echo "DOMAIN=smartnextmovenow.tech" >> .env   # once DNS points at the VM
 bash deploy/deploy.sh         # builds and starts app + Caddy (auto HTTPS)
 ```
 

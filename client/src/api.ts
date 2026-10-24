@@ -21,7 +21,7 @@ export type PricePoint = { week: string; price: number };
 
 export const api = {
   health: () => request<Health>("/health"),
-  createDemoCustomer: () => request<{ customerId: string }>("/nessie/demo-customer", { method: "POST" }),
+  createDemoCustomer: () => request<{ customerId: string; name: string; profile: string }>("/nessie/demo-customer", { method: "POST" }),
   cashFlow: (id: string) => request<CashFlow>(`/nessie/customers/${id}/cashflow`),
   quotes: (model: string, year: number, city: string) =>
     request<{ quotes: Quote[] }>(`/prices/${model}?year=${year}&city=${encodeURIComponent(city)}`),

@@ -2,9 +2,11 @@ import { useState } from "react";
 import { api, usd, type CashFlow } from "../api";
 
 const STORAGE_KEY = "nessieCustomerId";
+const LABEL_KEY = "nessieCustomerLabel";
 
 export default function CashFlowPanel() {
   const [customerId, setCustomerId] = useState(() => localStorage.getItem(STORAGE_KEY) ?? "");
+  const [label, setLabel] = useState(() => localStorage.getItem(LABEL_KEY) ?? "");
   const [cashFlow, setCashFlow] = useState<CashFlow | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -23,9 +25,12 @@ export default function CashFlowPanel() {
 
   const createCustomer = () =>
     run("Creating demo customer (about 30s)…", async () => {
-      const { customerId } = await api.createDemoCustomer();
+      const { customerId, name, profile } = await api.createDemoCustomer();
+      const newLabel = `${name} · ${profile}`;
       localStorage.setItem(STORAGE_KEY, customerId);
+      localStorage.setItem(LABEL_KEY, newLabel);
       setCustomerId(customerId);
+      setLabel(newLabel);
       setCashFlow(await api.cashFlow(customerId));
     });
 
@@ -39,9 +44,10 @@ export default function CashFlowPanel() {
       <h2>Bank cash flow <span className="tag">Capital One Nessie</span></h2>
       <div className="row">
         <button onClick={createCustomer} disabled={Boolean(loading)}>Create demo customer</button>
-        <input value={customerId} onChange={(e) => setCustomerId(e.target.value)} placeholder="Nessie customer ID" />
+        <input value={customerId} onChange={(e) => { setCustomerId(e.target.value); setLabel(""); }} placeholder="Nessie customer ID" />
         <button className="secondary" onClick={loadCashFlow} disabled={!customerId || Boolean(loading)}>Load</button>
       </div>
+      {label && <p className="muted small">Customer: <strong>{label}</strong></p>}
       {loading && <p className="muted">{loading}</p>}
       {error && <p className="error">{error}</p>}
       {cashFlow && (
