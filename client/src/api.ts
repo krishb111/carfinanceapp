@@ -30,3 +30,40 @@ export const api = {
 };
 
 export const usd = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+
+export type LifeEvent = "none" | "new_baby" | "relocation" | "income_drop" | "remote_work" | "longer_commute";
+export type LeaseInput = {
+  model: string;
+  year: number;
+  monthlyPayment: number;
+  buyoutPrice: number;
+  milesDriven: number;
+  mileageAllowance: number;
+  annualMiles: number;
+  lifeEvent: LifeEvent;
+};
+export type Option = {
+  id: string;
+  title: string;
+  monthlyPayment: number;
+  upfront: number;
+  netCost: number;
+  affordability: number;
+  score: number;
+  reasons: string[];
+};
+export type Recommendation = {
+  horizonMonths: number;
+  equity: number;
+  freeCashFlow: number;
+  market: { used: number; tradeIn: number; newPrice: number };
+  options: Option[];
+  assumptions: Record<string, string | number>;
+};
+
+export const recommend = (customerId: string, city: string, lease: LeaseInput) =>
+  request<Recommendation>("/recommend", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ customerId, city, lease }),
+  });

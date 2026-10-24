@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api, type Health } from "./api";
 import CashFlowPanel from "./components/CashFlowPanel";
 import PricesPanel from "./components/PricesPanel";
+import RecommendationPanel from "./components/RecommendationPanel";
 import "./styles.css";
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
       </header>
       <CashFlowPanel />
       <PricesPanel />
+      <RecommendationPanel />
     </main>
   );
 }

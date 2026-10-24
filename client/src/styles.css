@@ -44,3 +44,15 @@ button:disabled { opacity: 0.5; cursor: default; }
 .chart .axis { fill: var(--muted); font-size: 11px; }
 .dealers { list-style: none; padding: 0; margin: 0; }
 .dealers li { padding: 8px 0; border-bottom: 1px solid var(--border); }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.form-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: var(--muted); }
+.span-2 { grid-column: span 2; }
+@media (max-width: 420px) { .span-2 { grid-column: auto; } }
+.option { border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-top: 12px; }
+.option.top { border: 2px solid var(--accent); }
+.option-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.badge { display: inline-block; background: var(--accent); color: #fff; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin: 0 8px 4px 0; }
+.score { font-size: 1.4rem; font-weight: 700; }
+.option-nums { display: flex; flex-wrap: wrap; gap: 14px; margin: 6px 0; }
+.reasons { margin: 6px 0 0; padding-left: 18px; font-size: 0.88rem; }
+.reasons li { margin: 3px 0; }
