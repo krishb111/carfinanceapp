@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { config } from "./config.js";
 import { nessieRouter } from "./routes/nessie.js";
+import { pricesRouter } from "./routes/prices.js";
 
 const app = express();
 app.use(cors());
@@ -20,6 +21,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/nessie", nessieRouter);
+app.use("/api/prices", pricesRouter);
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
