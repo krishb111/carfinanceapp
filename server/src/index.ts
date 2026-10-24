@@ -4,6 +4,7 @@ import { config } from "./config.js";
 import { nessieRouter } from "./routes/nessie.js";
 import { pricesRouter } from "./routes/prices.js";
 import { recommendRouter } from "./routes/recommend.js";
+import { explainRouter } from "./routes/explain.js";
 
 const app = express();
 app.use(cors());
@@ -24,6 +25,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/nessie", nessieRouter);
 app.use("/api/prices", pricesRouter);
 app.use("/api/recommend", recommendRouter);
+app.use("/api/explain", explainRouter);
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);

@@ -67,3 +67,12 @@ export const recommend = (customerId: string, city: string, lease: LeaseInput) =
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ customerId, city, lease }),
   });
+
+export type ChatMessage = { role: "user" | "model"; text: string };
+
+const post = <T>(path: string, body: unknown) =>
+  request<T>(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+export const explain = (analysis: Recommendation) => post<{ text: string }>("/explain", { analysis });
+export const chat = (analysis: Recommendation, messages: ChatMessage[]) =>
+  post<{ text: string }>("/explain/chat", { analysis, messages });

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Explainer from "./Explainer";
 import { recommend, usd, type LeaseInput, type LifeEvent, type Recommendation } from "../api";
 
 const LIFE_EVENTS: { id: LifeEvent; label: string }[] = [
@@ -79,6 +80,7 @@ export default function RecommendationPanel() {
             <Mini label="New price" value={usd(result.market.newPrice)} />
             <Mini label="Free cash flow" value={`${usd(result.freeCashFlow)}/mo`} />
           </div>
+          <Explainer analysis={result} />
           <OptionCard option={best} horizon={result.horizonMonths} top />
           {rest.map((o) => <OptionCard key={o.id} option={o} horizon={result.horizonMonths} />)}
           <details className="muted small" style={{ marginTop: 12 }}>
