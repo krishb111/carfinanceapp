@@ -19,3 +19,17 @@ cp .env.example .env   # fill in keys
 npm install
 npm run dev            # API on :4000, web on :5173
 ```
+
+## Deploy (Vultr)
+
+On a fresh Ubuntu VM, as root:
+
+```bash
+git clone https://github.com/krishb111/carfinanceapp.git && cd carfinanceapp
+bash deploy/setup.sh          # installs Docker, opens ports 80/443
+nano .env                     # paste the same keys as local .env
+echo "DOMAIN=smartnextmove.tech" >> .env   # once DNS points at the VM
+bash deploy/deploy.sh         # builds and starts app + Caddy (auto HTTPS)
+```
+
+Without `DOMAIN`, the app is served over plain HTTP at the VM's IP.

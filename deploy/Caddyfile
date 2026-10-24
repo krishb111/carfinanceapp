@@ -1,0 +1,6 @@
+# Caddy gets HTTPS certificates automatically once DOMAIN points at this server.
+# Without a domain (DOMAIN=:80) it serves plain HTTP on the server IP.
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy app:4000
+}
