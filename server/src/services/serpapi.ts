@@ -1,7 +1,18 @@
 import { config } from "../config.js";
 
 type OrganicResult = { title?: string; link?: string; snippet?: string; source?: string };
-type LocalResult = { title?: string; address?: string; rating?: number; phone?: string };
+export type LocalResult = {
+  title?: string;
+  type?: string;
+  address?: string;
+  rating?: number;
+  reviews?: number;
+  phone?: string;
+  hours?: string;
+  description?: string;
+  links?: { website?: string; phone?: string };
+  gps_coordinates?: { latitude: number; longitude: number };
+};
 type SearchResponse = { error?: string; organic_results?: OrganicResult[]; local_results?: LocalResult[] | { places?: LocalResult[] } };
 
 export async function googleSearch(q: string): Promise<SearchResponse> {

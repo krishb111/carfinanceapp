@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { api, usd, type Dealer, type PricePoint, type Quote } from "../api";
 import PriceChart from "./PriceChart";
+import DealerList from "./DealerList";
+import { TOYOTA_MODELS } from "../models";
 
-const MODELS = ["RAV4", "Camry", "Corolla", "Highlander", "Tacoma", "Prius", "Tundra", "4Runner"];
 const LABELS: Record<Quote["kind"], string> = { used: "Your car (used market)", trade_in: "Trade-in estimate", new: "New replacement" };
 
 export default function PricesPanel() {
@@ -31,11 +32,13 @@ export default function PricesPanel() {
   }
 
   return (
-    <section className="card">
-      <h2>Live vehicle prices <span className="tag">SerpApi + Tiger Data</span></h2>
+    <section className="card" id="prices">
+      <div className="eyebrow">Step 2</div>
+      <h2>What your Toyota is worth today</h2>
+      <p className="muted">Live listings from Google via SerpApi, tracked over time in Tiger Data.</p>
       <div className="row">
         <select value={model} onChange={(e) => setModel(e.target.value)}>
-          {MODELS.map((m) => <option key={m}>{m}</option>)}
+          {TOYOTA_MODELS.map((m) => <option key={m}>{m}</option>)}
         </select>
         <input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} style={{ width: 90 }} />
         <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="City, State" />
@@ -61,17 +64,10 @@ export default function PricesPanel() {
         </>
       )}
       {dealers && dealers.length > 0 && (
-        <>
-          <h3>Nearby Toyota dealers</h3>
-          <ul className="dealers">
-            {dealers.map((d) => (
-              <li key={d.name}>
-                <strong>{d.name}</strong> {d.rating && <span className="muted">★ {d.rating}</span>}
-                <div className="muted small">{d.address} {d.phone && `· ${d.phone}`}</div>
-              </li>
-            ))}
-          </ul>
-        </>
+        <div id="dealers">
+          <h3>Toyota dealers near {city}</h3>
+          <DealerList dealers={dealers} model={model} />
+        </div>
       )}
     </section>
   );

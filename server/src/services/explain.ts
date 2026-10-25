@@ -59,7 +59,7 @@ export function rerun(analysis: Analysis, changes: Record<string, unknown>): Rec
     monthlyIncome: analysis.cashFlow.monthlyIncome + incomeChange,
     freeCashFlow: analysis.cashFlow.freeCashFlow + incomeChange,
   };
-  return recommend(lease, market, cashFlow);
+  return recommend(lease, market, cashFlow, analysis.assumptions);
 }
 
 /** Keeps the context small: Gemini doesn't need the raw spending breakdown to explain options. */

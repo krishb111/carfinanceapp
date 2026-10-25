@@ -37,35 +37,65 @@ export type Recommendation = {
   equity: number;
   freeCashFlow: number;
   options: Option[];
-  assumptions: Record<string, string | number>;
+  assumptions: Assumptions;
 };
 
 const HORIZON = 36;
-const LOAN_APR = 0.069;
-const LOAN_MONTHS = 60;
-const OVER_MILE_FEE = 0.25;
-const LEASE_FACTOR = 0.0155; // monthly lease ≈ 1.55% of MSRP
-const LEASE_DUE_AT_SIGNING = 2000;
 const MAINT_OWNED_OLDER = 90;
 const MAINT_NEW = 35;
-const DEPRECIATION_3YR = 0.62; // value retained by a Toyota after ~3 years
-const FLEX_BASE = 649; // all-in subscription incl. maintenance
 const FLEX_INSURANCE_SAVED = 120; // subscription bundles insurance
-const FLEX_PER_MILE = 0.12; // usage-based rate for low-mileage drivers
+
+/** Market and financing assumptions; users can override any of these from the UI. */
+export type Assumptions = {
+  loanApr: number; // percent
+  loanTermMonths: number;
+  leaseFactor: number; // monthly lease payment as % of MSRP
+  leaseDueAtSigning: number;
+  valueRetained3yr: number; // percent of value a Toyota keeps after ~3 years
+  overMileFee: number; // dollars per mile
+  tradeInRatio: number; // percent of retail value a dealer pays on trade-in
+  subscriptionPrice: number; // all-in monthly subscription incl. maintenance
+  perMileRate: number; // usage-based rate for low-mileage drivers
+};
+
+export const DEFAULT_ASSUMPTIONS: Assumptions = {
+  loanApr: 6.9,
+  loanTermMonths: 60,
+  leaseFactor: 1.55,
+  leaseDueAtSigning: 2000,
+  valueRetained3yr: 62,
+  overMileFee: 0.25,
+  tradeInRatio: 88,
+  subscriptionPrice: 649,
+  perMileRate: 0.12,
+};
+
+/** Fills in defaults and drops anything that isn't a sane number. */
+export function resolveAssumptions(overrides?: Partial<Assumptions>): Assumptions {
+  const a = { ...DEFAULT_ASSUMPTIONS };
+  for (const key of Object.keys(a) as (keyof Assumptions)[]) {
+    const v = Number(overrides?.[key]);
+    if (overrides?.[key] !== undefined && Number.isFinite(v) && v >= 0) a[key] = v;
+  }
+  a.loanTermMonths = Math.max(12, Math.round(a.loanTermMonths));
+  return a;
+}
 
 const round = (x: number) => Math.round(x);
 
 /** Standard amortized loan payment. */
-export function loanPayment(principal: number, apr = LOAN_APR, months = LOAN_MONTHS) {
+export function loanPayment(principal: number, apr: number, months: number) {
   if (principal <= 0) return 0;
   const r = apr / 12;
+  if (r === 0) return principal / months;
   return (principal * r) / (1 - (1 + r) ** -months);
 }
 
 /** Loan balance remaining after `paid` payments. */
-function loanBalance(principal: number, paid: number, apr = LOAN_APR, months = LOAN_MONTHS) {
+function loanBalance(principal: number, paid: number, apr: number, months: number) {
   if (principal <= 0) return 0;
   const r = apr / 12;
+  if (r === 0) return Math.max(0, principal - (principal / months) * paid);
   const pmt = loanPayment(principal, apr, months);
   return principal * (1 + r) ** paid - (pmt * ((1 + r) ** paid - 1)) / r;
 }
@@ -93,7 +123,23 @@ const LIFE_EVENT_FIT: Record<LifeEvent, Partial<Record<OptionId, { boost: number
   },
 };
 
-export function recommend(lease: LeaseInput, market: MarketPrices, cashFlow: CashFlow): Recommendation {
+export function recommend(
+  lease: LeaseInput,
+  market: MarketPrices,
+  cashFlow: CashFlow,
+  overrides?: Partial<Assumptions>
+): Recommendation {
+  const a = resolveAssumptions(overrides);
+  const apr = a.loanApr / 100;
+  const loan = (principal: number) => loanPayment(principal, apr, a.loanTermMonths);
+  const balanceAfter = (principal: number, paid: number) => loanBalance(principal, paid, apr, a.loanTermMonths);
+  const LEASE_FACTOR = a.leaseFactor / 100;
+  const LEASE_DUE_AT_SIGNING = a.leaseDueAtSigning;
+  const DEPRECIATION_3YR = a.valueRetained3yr / 100;
+  const OVER_MILE_FEE = a.overMileFee;
+  const FLEX_BASE = a.subscriptionPrice;
+  const FLEX_PER_MILE = a.perMileRate;
+
   const equity = round(market.tradeIn - lease.buyoutPrice);
   const overMiles = Math.max(0, lease.milesDriven - lease.mileageAllowance);
   const turnInFee = round(overMiles * OVER_MILE_FEE);
@@ -110,8 +156,8 @@ export function recommend(lease: LeaseInput, market: MarketPrices, cashFlow: Cas
   // 1. Buy out the lease (financed)
   {
     const financed = Math.max(0, lease.buyoutPrice - down);
-    const pmt = loanPayment(financed);
-    const balance = loanBalance(financed, HORIZON);
+    const pmt = loan(financed);
+    const balance = balanceAfter(financed, HORIZON);
     const valueLater = market.used * DEPRECIATION_3YR;
     const outOfPocket = down + pmt * HORIZON + MAINT_OWNED_OLDER * HORIZON;
     const reasons = [
@@ -129,8 +175,8 @@ export function recommend(lease: LeaseInput, market: MarketPrices, cashFlow: Cas
   // 2. Trade in equity toward a new purchase
   {
     const principal = Math.max(0, market.newPrice - equity - down);
-    const pmt = loanPayment(principal);
-    const balance = loanBalance(principal, HORIZON);
+    const pmt = loan(principal);
+    const balance = balanceAfter(principal, HORIZON);
     const valueLater = market.newPrice * DEPRECIATION_3YR;
     const outOfPocket = down + pmt * HORIZON + MAINT_NEW * HORIZON;
     const reasons = [
@@ -217,14 +263,7 @@ export function recommend(lease: LeaseInput, market: MarketPrices, cashFlow: Cas
     equity,
     freeCashFlow: fcf,
     options: scored.sort((a, b) => b.score - a.score),
-    assumptions: {
-      loanApr: `${(LOAN_APR * 100).toFixed(1)}%`,
-      loanTermMonths: LOAN_MONTHS,
-      leaseFactor: `${(LEASE_FACTOR * 100).toFixed(2)}% of MSRP per month`,
-      valueRetainedAfter3Years: `${DEPRECIATION_3YR * 100}%`,
-      overMileFee: `$${OVER_MILE_FEE}/mile`,
-      downPayment: down,
-    },
+    assumptions: a,
   };
 }
 

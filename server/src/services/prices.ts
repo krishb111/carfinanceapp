@@ -85,10 +85,40 @@ export async function getQuotes(model: string, year: number, city: string, zip: 
   return quotes;
 }
 
-/** Nearby Toyota dealers with inventory, from Google's local results. */
+/** Strips tracking params so dealer links are clean. */
+const cleanUrl = (url?: string) => {
+  if (!url) return undefined;
+  try {
+    const u = new URL(url);
+    [...u.searchParams.keys()].filter((k) => k.startsWith("utm_")).forEach((k) => u.searchParams.delete(k));
+    return u.toString();
+  } catch {
+    return url;
+  }
+};
+
+/** Nearby Toyota dealers from Google's local results, with links to their site, map, and inventory search. */
 export async function getDealers(model: string, city: string) {
   const data = await googleSearch(`Toyota dealer ${model} inventory near ${city}`);
-  return localResults(data).slice(0, 5).map((d) => ({ name: d.title, address: d.address, rating: d.rating, phone: d.phone }));
+  return localResults(data)
+    .filter((d) => /toyota/i.test(`${d.title} ${d.type}`))
+    .slice(0, 5)
+    .map((d) => {
+      const gps = d.gps_coordinates;
+      const destination = gps ? `${gps.latitude},${gps.longitude}` : `${d.title} ${d.address}`;
+      return {
+        name: d.title,
+        address: d.address,
+        rating: d.rating,
+        reviews: d.reviews,
+        phone: d.phone,
+        hours: d.hours,
+        quote: d.description?.replace(/^"|"$/g, ""),
+        website: cleanUrl(d.links?.website),
+        directionsUrl: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`,
+        inventoryUrl: `https://www.google.com/search?q=${encodeURIComponent(`${d.title} new ${model} inventory`)}`,
+      };
+    });
 }
 
 export async function getPriceHistory(model: string, kind: PriceKind) {

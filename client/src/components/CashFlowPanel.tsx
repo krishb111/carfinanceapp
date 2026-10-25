@@ -40,8 +40,10 @@ export default function CashFlowPanel() {
   const maxCategory = categories[0]?.[1] ?? 1;
 
   return (
-    <section className="card">
-      <h2>Bank cash flow <span className="tag">Capital One Nessie</span></h2>
+    <section className="card" id="finances">
+      <div className="eyebrow">Step 1</div>
+      <h2>Your finances</h2>
+      <p className="muted">Real-looking bank data from Capital One's Nessie API.</p>
       <div className="row">
         <button onClick={createCustomer} disabled={Boolean(loading)}>Create demo customer</button>
         <input value={customerId} onChange={(e) => { setCustomerId(e.target.value); setLabel(""); }} placeholder="Nessie customer ID" />

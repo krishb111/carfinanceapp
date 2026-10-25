@@ -1,6 +1,8 @@
 import { useState } from "react";
 import Explainer from "./Explainer";
-import { recommend, usd, type LeaseInput, type LifeEvent, type Recommendation } from "../api";
+import AssumptionsEditor from "./AssumptionsEditor";
+import { DEFAULT_ASSUMPTIONS, recommend, usd, type Assumptions, type LeaseInput, type LifeEvent, type Recommendation } from "../api";
+import { TOYOTA_MODELS } from "../models";
 
 const LIFE_EVENTS: { id: LifeEvent; label: string }[] = [
   { id: "none", label: "No big changes" },
@@ -26,6 +28,7 @@ export default function RecommendationPanel() {
     milesDriven: 31200, mileageAllowance: 36000, annualMiles: 12000, lifeEvent: "none",
   });
   const [city, setCity] = useState("Dallas TX");
+  const [assumptions, setAssumptions] = useState<Assumptions>(DEFAULT_ASSUMPTIONS);
   const [result, setResult] = useState<Recommendation | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +41,7 @@ export default function RecommendationPanel() {
     setLoading(true);
     setError(null);
     try {
-      setResult(await recommend(customerId, city, lease));
+      setResult(await recommend(customerId, city, lease, assumptions));
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -49,10 +52,16 @@ export default function RecommendationPanel() {
   const [best, ...rest] = result?.options ?? [];
 
   return (
-    <section className="card">
-      <h2>Your smartest next move <span className="tag">Toyota</span></h2>
+    <section className="card" id="next-move">
+      <div className="eyebrow">Step 3</div>
+      <h2>Your smartest next move</h2>
       <div className="form-grid">
-        <label>Model<input value={lease.model} onChange={(e) => set("model", e.target.value)} /></label>
+        <label>
+          Model
+          <select value={lease.model} onChange={(e) => set("model", e.target.value)}>
+            {TOYOTA_MODELS.map((m) => <option key={m}>{m}</option>)}
+          </select>
+        </label>
         {FIELDS.map((f) => (
           <label key={f.key}>
             {f.label}
@@ -67,7 +76,8 @@ export default function RecommendationPanel() {
           </select>
         </label>
       </div>
-      <button onClick={submit} disabled={loading} style={{ marginTop: 12 }}>
+      <AssumptionsEditor value={assumptions} onChange={setAssumptions} />
+      <button onClick={submit} disabled={loading} className="cta">
         {loading ? "Crunching numbers…" : "Find my next move"}
       </button>
       {error && <p className="error">{error}</p>}
@@ -83,10 +93,6 @@ export default function RecommendationPanel() {
           <Explainer analysis={result} />
           <OptionCard option={best} horizon={result.horizonMonths} top />
           {rest.map((o) => <OptionCard key={o.id} option={o} horizon={result.horizonMonths} />)}
-          <details className="muted small" style={{ marginTop: 12 }}>
-            <summary>Assumptions</summary>
-            <ul>{Object.entries(result.assumptions).map(([k, v]) => <li key={k}>{k}: {v}</li>)}</ul>
-          </details>
         </>
       )}
     </section>
